@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-public class Inventario {
+public class inventario {
 
     // Utiliza un ArrayList para los nombres de los productos, permitiendo
     // un tamaño dinámico.
@@ -26,7 +26,7 @@ public class Inventario {
     /**
      * Constructor para inicializar las estructuras de datos.
      */
-    public Inventario() {
+    public inventario() {
         this.nombres = new ArrayList<>();
         this.stock = new HashMap<>();
         // Inicia el array de precios con una capacidad inicial.
@@ -91,24 +91,4 @@ public class Inventario {
     }
 
    
-    public static void main(String[] args) {
-        Inventario inventario = new Inventario();
-
-        inventario.addProducto("Laptop", 1200.50, 5);
-        inventario.addProducto("Mouse", 25.00, 50);
-
-        System.out.println("Productos en inventario:");
-        for (int i = 0; i < inventario.getNombres().size(); i++) {
-            System.out.println("Nombre: " + inventario.getNombres().get(i) +
-                               ", Precio: $" + inventario.getPrecios()[i] +
-                               ", Stock: " + inventario.getStock().get(inventario.getNombres().get(i)));
-        }
-
-        int index = inventario.indexOfNombre("Laptop");
-        if (index != -1) {
-            System.out.println("\n'Laptop' encontrado en el índice: " + index);
-        } else {
-            System.out.println("\n'Laptop' no encontrado.");
-        }
-    }
 }
