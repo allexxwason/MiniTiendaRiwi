@@ -6,7 +6,6 @@ package com.codeup.minitiendariwi.ui;
 
 import com.codeup.minitiendariwi.domain.Inventario;
 import javax.swing.JOptionPane;
-import java.util.InputMismatchException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -46,38 +45,80 @@ public class MiniTiendaRiwi {
                     JOptionPane.PLAIN_MESSAGE);
 
             if (opcion == null) {
-                opcion = "6"; // Trata el cierre de la ventana como la opción de Salir.
+                opcion = "6";
             }
 
-            try {
-                switch (opcion) {
-                    case "1":
-                        agregarProducto();
-                        break;
-                    case "2":
-                        listarInventario();
-                        break;
-                    case "3":
-                        comprarProducto();
-                        break;
-                    case "4":
-                        mostrarEstadisticas();
-                        break;
-                    case "5":
-                        buscarProducto();
-                        break;
-                    case "6":
-                        mostrarTicketFinal();
-                        JOptionPane.showMessageDialog(null, "Saliendo del sistema.", "Adiós", JOptionPane.INFORMATION_MESSAGE);
-                        break;
-                    default:
-                        JOptionPane.showMessageDialog(null, "Opción inválida. Por favor, intente de nuevo.", "Error", JOptionPane.ERROR_MESSAGE);
-                        break;
-                }
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Entrada inválida. Por favor, ingrese un número.", "Error", JOptionPane.ERROR_MESSAGE);
+            switch (opcion) {
+                case "1":
+                    agregarProducto();
+                    break;
+                case "2":
+                    listarInventario();
+                    break;
+                case "3":
+                    comprarProducto();
+                    break;
+                case "4":
+                    mostrarEstadisticas();
+                    break;
+                case "5":
+                    buscarProducto();
+                    break;
+                case "6":
+                    mostrarTicketFinal();
+                    JOptionPane.showMessageDialog(null, "Saliendo del sistema.", "Adiós", JOptionPane.INFORMATION_MESSAGE);
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(null, "Opción inválida. Intente de nuevo.", "Error", JOptionPane.ERROR_MESSAGE);
+                    break;
             }
         } while (!opcion.equals("6"));
+    }
+
+    /**
+     * Pide una cadena de texto al usuario.
+     * @param mensaje Mensaje a mostrar en el cuadro de diálogo.
+     * @return La cadena ingresada por el usuario o null si se cancela.
+     */
+    private String getStringInput(String mensaje) {
+        String input = JOptionPane.showInputDialog(mensaje);
+        return (input == null || input.trim().isEmpty()) ? null : input.trim();
+    }
+
+    /**
+     * Pide un número entero al usuario y maneja errores de formato.
+     * @param mensaje Mensaje a mostrar en el cuadro de diálogo.
+     * @return El número entero ingresado o -1 si la entrada es inválida.
+     */
+    private int getIntInput(String mensaje) {
+        String input = JOptionPane.showInputDialog(mensaje);
+        if (input == null || input.trim().isEmpty()) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Entrada inválida. Ingrese un número entero.", "Error", JOptionPane.ERROR_MESSAGE);
+            return -1;
+        }
+    }
+
+    /**
+     * Pide un número decimal al usuario y maneja errores de formato.
+     * @param mensaje Mensaje a mostrar en el cuadro de diálogo.
+     * @return El número decimal ingresado o -1.0 si la entrada es inválida.
+     */
+    private double getDoubleInput(String mensaje) {
+        String input = JOptionPane.showInputDialog(mensaje);
+        if (input == null || input.trim().isEmpty()) {
+            return -1.0;
+        }
+        try {
+            return Double.parseDouble(input);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Entrada inválida. Ingrese un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+            return -1.0;
+        }
     }
 
     /**
@@ -85,26 +126,22 @@ public class MiniTiendaRiwi {
      * Valida que el producto no exista y que las entradas sean válidas.
      */
     private void agregarProducto() {
-        try {
-            String nombre = JOptionPane.showInputDialog("Ingrese el nombre del producto:");
-            if (nombre == null || nombre.trim().isEmpty()) {
-                return;
-            }
+        String nombre = getStringInput("Ingrese el nombre del producto:");
+        if (nombre == null) return;
 
-            // Evita productos duplicados.
-            if (inventario.indexOfNombre(nombre) != -1) {
-                JOptionPane.showMessageDialog(null, "Este producto ya existe en el inventario.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            double precio = Double.parseDouble(JOptionPane.showInputDialog("Ingrese el precio del producto:"));
-            int cantidad = Integer.parseInt(JOptionPane.showInputDialog("Ingrese la cantidad inicial:"));
-
-            inventario.addProducto(nombre, precio, cantidad);
-            JOptionPane.showMessageDialog(null, "Producto agregado correctamente.");
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "El precio y la cantidad deben ser números válidos.", "Error", JOptionPane.ERROR_MESSAGE);
+        if (inventario.indexOfNombre(nombre) != -1) {
+            JOptionPane.showMessageDialog(null, "Este producto ya existe en el inventario.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+        double precio = getDoubleInput("Ingrese el precio del producto:");
+        if (precio == -1.0) return;
+
+        int cantidad = getIntInput("Ingrese la cantidad inicial:");
+        if (cantidad == -1) return;
+
+        inventario.addProducto(nombre, precio, cantidad);
+        JOptionPane.showMessageDialog(null, "Producto agregado correctamente.");
     }
 
     /**
@@ -135,10 +172,8 @@ public class MiniTiendaRiwi {
      * El total de la compra se acumula.
      */
     private void comprarProducto() {
-        String nombre = JOptionPane.showInputDialog("Ingrese el nombre del producto a comprar:");
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return;
-        }
+        String nombre = getStringInput("Ingrese el nombre del producto a comprar:");
+        if (nombre == null) return;
 
         int index = inventario.indexOfNombre(nombre);
         if (index == -1) {
@@ -146,25 +181,22 @@ public class MiniTiendaRiwi {
             return;
         }
 
-        try {
-            int cantidad = Integer.parseInt(JOptionPane.showInputDialog("Ingrese la cantidad a comprar:"));
+        int cantidad = getIntInput("Ingrese la cantidad a comprar:");
+        if (cantidad == -1) return;
 
-            if (cantidad <= 0) {
-                JOptionPane.showMessageDialog(null, "La cantidad debe ser mayor que cero.");
-                return;
-            }
+        if (cantidad <= 0) {
+            JOptionPane.showMessageDialog(null, "La cantidad debe ser mayor que cero.");
+            return;
+        }
 
-            int stockActual = inventario.getStock().get(nombre);
-            if (stockActual < cantidad) {
-                JOptionPane.showMessageDialog(null, "Stock insuficiente. Cantidad disponible: " + stockActual);
-            } else {
-                inventario.getStock().put(nombre, stockActual - cantidad);
-                double precioProducto = inventario.getPrecios()[index];
-                totalCompras += precioProducto * cantidad;
-                JOptionPane.showMessageDialog(null, "Compra realizada con éxito. Nuevo stock de " + nombre + ": " + (stockActual - cantidad));
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "La cantidad debe ser un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        int stockActual = inventario.getStock().get(nombre);
+        if (stockActual < cantidad) {
+            JOptionPane.showMessageDialog(null, "Stock insuficiente. Cantidad disponible: " + stockActual);
+        } else {
+            inventario.getStock().put(nombre, stockActual - cantidad);
+            double precioProducto = inventario.getPrecios()[index];
+            totalCompras += precioProducto * cantidad;
+            JOptionPane.showMessageDialog(null, "Compra realizada con éxito. Nuevo stock de " + nombre + ": " + (stockActual - cantidad));
         }
     }
 
@@ -181,7 +213,6 @@ public class MiniTiendaRiwi {
         double precioMax = precios[0];
         double precioMin = precios[0];
 
-        // Recorre el array para encontrar los valores extremos.
         for (int i = 1; i < inventario.getPreciosSize(); i++) {
             if (precios[i] > precioMax) {
                 precioMax = precios[i];
@@ -202,17 +233,14 @@ public class MiniTiendaRiwi {
      * Busca productos por coincidencias parciales en el nombre (insensible a mayúsculas/minúsculas).
      */
     private void buscarProducto() {
-        String busqueda = JOptionPane.showInputDialog("Ingrese el nombre o parte del nombre del producto a buscar:");
-        if (busqueda == null || busqueda.trim().isEmpty()) {
-            return;
-        }
+        String busqueda = getStringInput("Ingrese el nombre o parte del nombre del producto a buscar:");
+        if (busqueda == null) return;
 
         StringBuilder resultados = new StringBuilder("--- Resultados de Búsqueda ---\n");
         boolean encontrado = false;
 
         for (int i = 0; i < inventario.getNombres().size(); i++) {
             String nombreProducto = inventario.getNombres().get(i);
-            // Compara las cadenas sin importar mayúsculas/minúsculas.
             if (nombreProducto.toLowerCase().contains(busqueda.toLowerCase())) {
                 resultados.append("Producto: ").append(nombreProducto).append("\n")
                           .append("  Precio: $").append(String.format("%.2f", inventario.getPrecios()[i])).append("\n")
