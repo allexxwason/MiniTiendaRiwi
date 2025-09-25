@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-public class inventario {
+public class Inventario {
 
     // Utiliza un ArrayList para los nombres de los productos, permitiendo
     // un tamaño dinámico.
@@ -26,7 +26,7 @@ public class inventario {
     /**
      * Constructor para inicializar las estructuras de datos.
      */
-    public inventario() {
+    public Inventario() {
         this.nombres = new ArrayList<>();
         this.stock = new HashMap<>();
         // Inicia el array de precios con una capacidad inicial.
