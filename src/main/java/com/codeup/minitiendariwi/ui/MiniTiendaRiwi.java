@@ -1,13 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.codeup.minitiendariwi.ui;
 
 import com.codeup.minitiendariwi.domain.Inventario;
+import com.codeup.minitiendariwi.domain.Producto;
 import javax.swing.JOptionPane;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
 /**
  * Clase principal de la aplicación.
@@ -18,18 +14,11 @@ public class MiniTiendaRiwi {
     private Inventario inventario;
     private double totalCompras;
 
-    /**
-     * Constructor para inicializar la aplicación y las estructuras de datos.
-     */
     public MiniTiendaRiwi() {
         this.inventario = new Inventario();
         this.totalCompras = 0.0;
     }
 
-    /**
-     * Muestra el menú principal y maneja el bucle de la aplicación.
-     * La ejecución se repite hasta que el usuario elija "Salir".
-     */
     public void mostrarMenu() {
         String opcion = "";
         do {
@@ -40,12 +29,15 @@ public class MiniTiendaRiwi {
                             "3. Comprar producto\n" +
                             "4. Mostrar estadísticas\n" +
                             "5. Buscar producto por nombre\n" +
-                            "6. Salir",
+                            "6. Actualizar stock \n" +
+                            "7. Actualizar nombre\n" +
+                            "8. Eliminar producto\n" +
+                            "9. Salir",
                     "Mini Tienda Riwi",
                     JOptionPane.PLAIN_MESSAGE);
 
             if (opcion == null) {
-                opcion = "6";
+                opcion = "9";
             }
 
             switch (opcion) {
@@ -65,6 +57,15 @@ public class MiniTiendaRiwi {
                     buscarProducto();
                     break;
                 case "6":
+                    actualizarStock(); // Renombrado para que se entienda mejor la diferencia
+                    break;
+                case "7":
+                    actualizarProducto(); // NUEVO MÉTODO
+                    break;
+                case "8":
+                    eliminarProducto(); // NUEVO MÉTODO
+                    break;
+                case "9":
                     mostrarTicketFinal();
                     JOptionPane.showMessageDialog(null, "Saliendo del sistema.", "Adiós", JOptionPane.INFORMATION_MESSAGE);
                     break;
@@ -72,24 +73,16 @@ public class MiniTiendaRiwi {
                     JOptionPane.showMessageDialog(null, "Opción inválida. Intente de nuevo.", "Error", JOptionPane.ERROR_MESSAGE);
                     break;
             }
-        } while (!opcion.equals("6"));
+        } while (!opcion.equals("9"));
     }
+    
+    // --- Métodos de Entrada de Usuario (sin cambios, pero listados por comodidad) ---
 
-    /**
-     * Pide una cadena de texto al usuario.
-     * @param mensaje Mensaje a mostrar en el cuadro de diálogo.
-     * @return La cadena ingresada por el usuario o null si se cancela.
-     */
     private String getStringInput(String mensaje) {
         String input = JOptionPane.showInputDialog(mensaje);
         return (input == null || input.trim().isEmpty()) ? null : input.trim();
     }
 
-    /**
-     * Pide un número entero al usuario y maneja errores de formato.
-     * @param mensaje Mensaje a mostrar en el cuadro de diálogo.
-     * @return El número entero ingresado o -1 si la entrada es inválida.
-     */
     private int getIntInput(String mensaje) {
         String input = JOptionPane.showInputDialog(mensaje);
         if (input == null || input.trim().isEmpty()) {
@@ -103,11 +96,6 @@ public class MiniTiendaRiwi {
         }
     }
 
-    /**
-     * Pide un número decimal al usuario y maneja errores de formato.
-     * @param mensaje Mensaje a mostrar en el cuadro de diálogo.
-     * @return El número decimal ingresado o -1.0 si la entrada es inválida.
-     */
     private double getDoubleInput(String mensaje) {
         String input = JOptionPane.showInputDialog(mensaje);
         if (input == null || input.trim().isEmpty()) {
@@ -120,107 +108,180 @@ public class MiniTiendaRiwi {
             return -1.0;
         }
     }
+    
+    // --- Lógica de la Aplicación (Usando el Inventario persistente) ---
 
-    /**
-     * Permite al usuario agregar un nuevo producto al inventario.
-     * Valida que el producto no exista y que las entradas sean válidas.
-     */
     private void agregarProducto() {
         String nombre = getStringInput("Ingrese el nombre del producto:");
         if (nombre == null) return;
 
-        if (inventario.indexOfNombre(nombre) != -1) {
+        if (inventario.existeProducto(nombre)) {
             JOptionPane.showMessageDialog(null, "Este producto ya existe en el inventario.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         double precio = getDoubleInput("Ingrese el precio del producto:");
-        if (precio == -1.0) return;
+        if (precio == -1.0 || precio <= 0) {
+            JOptionPane.showMessageDialog(null, "El precio debe ser positivo.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         int cantidad = getIntInput("Ingrese la cantidad inicial:");
-        if (cantidad == -1) return;
+        if (cantidad == -1 || cantidad < 0) {
+             JOptionPane.showMessageDialog(null, "La cantidad inicial no puede ser negativa.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        inventario.addProducto(nombre, precio, cantidad);
-        JOptionPane.showMessageDialog(null, "Producto agregado correctamente.");
+        if (inventario.addProducto(nombre, precio, cantidad)) {
+            JOptionPane.showMessageDialog(null, "Producto agregado correctamente a la base de datos.");
+        } else {
+             JOptionPane.showMessageDialog(null, "Error al agregar el producto a la BD. Revise la consola.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
-
-    /**
-     * Muestra la lista completa de productos, incluyendo nombre, precio y stock.
-     */
+    
     private void listarInventario() {
         StringBuilder sb = new StringBuilder("--- Inventario Actual ---\n");
-        ArrayList<String> nombres = inventario.getNombres();
-        double[] precios = inventario.getPrecios();
-        HashMap<String, Integer> stock = inventario.getStock();
+        List<Producto> productos = inventario.getTodosLosProductos();
 
-        if (nombres.isEmpty()) {
+        if (productos.isEmpty()) {
             sb.append("El inventario está vacío.");
         } else {
-            for (int i = 0; i < inventario.getPreciosSize(); i++) {
-                String nombre = nombres.get(i);
-                sb.append("Producto: ").append(nombre).append("\n")
-                  .append("  Precio: $").append(String.format("%.2f", precios[i])).append("\n")
-                  .append("  Stock: ").append(stock.get(nombre)).append("\n")
+            for (Producto producto : productos) {
+                sb.append("ID: ").append(producto.getId()).append("\n") // Mostramos el ID
+                  .append("  Producto: ").append(producto.getNombre()).append("\n")
+                  .append("  Precio: $").append(String.format("%.2f", producto.getPrecio())).append("\n")
+                  .append("  Stock: ").append(producto.getStock()).append("\n")
                   .append("------------------------\n");
             }
         }
         JOptionPane.showMessageDialog(null, sb.toString(), "Listado de Inventario", JOptionPane.PLAIN_MESSAGE);
     }
-
-    /**
-     * Procesa la compra de un producto, valida el stock y actualiza las estructuras de datos.
-     * El total de la compra se acumula.
-     */
+    
     private void comprarProducto() {
         String nombre = getStringInput("Ingrese el nombre del producto a comprar:");
         if (nombre == null) return;
 
-        int index = inventario.indexOfNombre(nombre);
-        if (index == -1) {
+        Producto producto = inventario.getProductoPorNombre(nombre);
+        
+        if (producto == null) {
             JOptionPane.showMessageDialog(null, "Producto no encontrado.");
             return;
         }
 
         int cantidad = getIntInput("Ingrese la cantidad a comprar:");
-        if (cantidad == -1) return;
-
-        if (cantidad <= 0) {
-            JOptionPane.showMessageDialog(null, "La cantidad debe ser mayor que cero.");
+        if (cantidad == -1 || cantidad <= 0) {
+            JOptionPane.showMessageDialog(null, "La cantidad debe ser mayor que cero.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        int stockActual = inventario.getStock().get(nombre);
+        int stockActual = producto.getStock();
         if (stockActual < cantidad) {
             JOptionPane.showMessageDialog(null, "Stock insuficiente. Cantidad disponible: " + stockActual);
         } else {
-            inventario.getStock().put(nombre, stockActual - cantidad);
-            double precioProducto = inventario.getPrecios()[index];
-            totalCompras += precioProducto * cantidad;
-            JOptionPane.showMessageDialog(null, "Compra realizada con éxito. Nuevo stock de " + nombre + ": " + (stockActual - cantidad));
+            int nuevoStock = stockActual - cantidad;
+            
+            if (inventario.actualizarStock(nombre, nuevoStock)) {
+                double precioProducto = producto.getPrecio();
+                totalCompras += precioProducto * cantidad;
+                JOptionPane.showMessageDialog(null, "Compra realizada con éxito. Nuevo stock de " + nombre + ": " + nuevoStock);
+            } else {
+                 JOptionPane.showMessageDialog(null, "Error al actualizar el stock en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    private void actualizarStock() {
+        String nombre = getStringInput("Ingrese el nombre del producto para actualizar stock:");
+        if (nombre == null) return;
+
+        if (!inventario.existeProducto(nombre)) {
+            JOptionPane.showMessageDialog(null, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        int nuevoStock = getIntInput("Ingrese el NUEVO stock total (ej: 50):");
+        if (nuevoStock == -1 || nuevoStock < 0) {
+            JOptionPane.showMessageDialog(null, "Stock no puede ser negativo.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (inventario.actualizarStock(nombre, nuevoStock)) {
+            JOptionPane.showMessageDialog(null, "Stock de " + nombre + " actualizado a: " + nuevoStock);
+        } else {
+            JOptionPane.showMessageDialog(null, "Error al actualizar stock en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    /**
-     * Encuentra y muestra el precio mínimo y máximo del inventario.
-     */
+    // NUEVO MÉTODO: Lógica para actualizar nombre y precio
+    private void actualizarProducto() {
+        String nombreActual = getStringInput("Ingrese el nombre del producto a actualizar:");
+        if (nombreActual == null) return;
+
+        Producto producto = inventario.getProductoPorNombre(nombreActual);
+        if (producto == null) {
+            JOptionPane.showMessageDialog(null, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String nuevoNombre = getStringInput("Ingrese el nuevo nombre (" + producto.getNombre() + "):");
+        double nuevoPrecio = getDoubleInput("Ingrese el nuevo precio (" + producto.getPrecio() + "):");
+
+        if (nuevoNombre == null || nuevoPrecio == -1.0) {
+             JOptionPane.showMessageDialog(null, "Operación cancelada o datos inválidos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if (nuevoPrecio <= 0) {
+            JOptionPane.showMessageDialog(null, "El precio debe ser positivo.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Usamos el mismo ID, pero con el nuevo nombre y precio.
+        Producto productoActualizado = new Producto(producto.getId(), nuevoNombre, nuevoPrecio, producto.getStock());
+
+        if (inventario.updateProducto(productoActualizado)) {
+            JOptionPane.showMessageDialog(null, "Producto actualizado con éxito: " + nuevoNombre + " ($" + String.format("%.2f", nuevoPrecio) + ")");
+        } else {
+            JOptionPane.showMessageDialog(null, "Error al actualizar el producto en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // NUEVO MÉTODO: Lógica para eliminar producto
+    private void eliminarProducto() {
+        String nombre = getStringInput("Ingrese el nombre del producto a ELIMINAR:");
+        if (nombre == null) return;
+
+        if (!inventario.existeProducto(nombre)) {
+            JOptionPane.showMessageDialog(null, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int confirmacion = JOptionPane.showConfirmDialog(null, 
+                "¿Está seguro de que desea ELIMINAR " + nombre + " permanentemente?", 
+                "Confirmar Eliminación", 
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            if (inventario.deleteProducto(nombre)) {
+                JOptionPane.showMessageDialog(null, "Producto '" + nombre + "' eliminado correctamente.");
+            } else {
+                JOptionPane.showMessageDialog(null, "Error al intentar eliminar el producto de la BD.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "Eliminación cancelada.", "Cancelado", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
     private void mostrarEstadisticas() {
-        if (inventario.getNombres().isEmpty()) {
+        List<Producto> productos = inventario.getTodosLosProductos();
+        
+        if (productos.isEmpty()) {
             JOptionPane.showMessageDialog(null, "El inventario está vacío. No hay estadísticas para mostrar.");
             return;
         }
 
-        double[] precios = inventario.getPrecios();
-        double precioMax = precios[0];
-        double precioMin = precios[0];
-
-        for (int i = 1; i < inventario.getPreciosSize(); i++) {
-            if (precios[i] > precioMax) {
-                precioMax = precios[i];
-            }
-            if (precios[i] < precioMin) {
-                precioMin = precios[i];
-            }
-        }
+        double precioMax = inventario.getPrecioMaximo();
+        double precioMin = inventario.getPrecioMinimo();
 
         String mensaje = String.format("--- Estadísticas de Precios ---\n" +
                                      "Precio más barato: $%.2f\n" +
@@ -228,10 +289,7 @@ public class MiniTiendaRiwi {
 
         JOptionPane.showMessageDialog(null, mensaje, "Estadísticas", JOptionPane.INFORMATION_MESSAGE);
     }
-
-    /**
-     * Busca productos por coincidencias parciales en el nombre (insensible a mayúsculas/minúsculas).
-     */
+    
     private void buscarProducto() {
         String busqueda = getStringInput("Ingrese el nombre o parte del nombre del producto a buscar:");
         if (busqueda == null) return;
@@ -239,12 +297,15 @@ public class MiniTiendaRiwi {
         StringBuilder resultados = new StringBuilder("--- Resultados de Búsqueda ---\n");
         boolean encontrado = false;
 
-        for (int i = 0; i < inventario.getNombres().size(); i++) {
-            String nombreProducto = inventario.getNombres().get(i);
+        List<Producto> productos = inventario.getTodosLosProductos();
+        
+        for (Producto producto : productos) {
+            String nombreProducto = producto.getNombre();
             if (nombreProducto.toLowerCase().contains(busqueda.toLowerCase())) {
-                resultados.append("Producto: ").append(nombreProducto).append("\n")
-                          .append("  Precio: $").append(String.format("%.2f", inventario.getPrecios()[i])).append("\n")
-                          .append("  Stock: ").append(inventario.getStock().get(nombreProducto)).append("\n")
+                resultados.append("ID: ").append(producto.getId()).append("\n")
+                          .append("  Producto: ").append(nombreProducto).append("\n")
+                          .append("  Precio: $").append(String.format("%.2f", producto.getPrecio())).append("\n")
+                          .append("  Stock: ").append(producto.getStock()).append("\n")
                           .append("------------------------\n");
                 encontrado = true;
             }
@@ -257,18 +318,12 @@ public class MiniTiendaRiwi {
         JOptionPane.showMessageDialog(null, resultados.toString(), "Buscar Producto", JOptionPane.PLAIN_MESSAGE);
     }
 
-    /**
-     * Muestra el total acumulado de compras de la sesión al salir de la aplicación.
-     */
     private void mostrarTicketFinal() {
         String mensaje = String.format("Gracias por tu visita.\n" +
                                      "Total de compras en esta sesión: $%.2f", totalCompras);
         JOptionPane.showMessageDialog(null, mensaje, "Ticket Final", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    /**
-     * Punto de entrada principal de la aplicación.
-     */
     public static void main(String[] args) {
         MiniTiendaRiwi app = new MiniTiendaRiwi();
         app.mostrarMenu();

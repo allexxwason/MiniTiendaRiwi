@@ -1,2 +1,5 @@
-com/codeup/minitiendariwi/domain/Inventario.class
+com/codeup/minitiendariwi/domain/Producto.class
 com/codeup/minitiendariwi/ui/MiniTiendaRiwi.class
+com/codeup/minitiendariwi/domain/Inventario.class
+com/codeup/minitiendariwi/db/DatabaseConnection.class
+com/codeup/minitiendariwi/db/ProductoDAO.class

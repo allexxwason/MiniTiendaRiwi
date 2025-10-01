@@ -1,94 +1,94 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.codeup.minitiendariwi.domain;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.codeup.minitiendariwi.db.ProductoDAO;
+import java.util.List;
 
-
+/**
+ * Clase que gestiona la lógica de negocio del inventario, 
+ * comunicándose con la capa de datos (DAO).
+ */
 public class Inventario {
 
-    // Utiliza un ArrayList para los nombres de los productos, permitiendo
-    // un tamaño dinámico.
-    private ArrayList<String> nombres;
+    private ProductoDAO productoDAO;
 
-    // Utiliza un Array primitivo para los precios.
-    // Su tamaño se gestionará dinámicamente.
-    private double[] precios;
-    private int preciosSize; 
-
-    // Utiliza un HashMap para el stock, asociando el nombre del producto
-    // con su cantidad.
-    private HashMap<String, Integer> stock;
-
-    /**
-     * Constructor para inicializar las estructuras de datos.
-     */
     public Inventario() {
-        this.nombres = new ArrayList<>();
-        this.stock = new HashMap<>();
-        // Inicia el array de precios con una capacidad inicial.
-        // Se expandirá si es necesario.
-        this.precios = new double[10];
-        this.preciosSize = 0;
+        this.productoDAO = new ProductoDAO();
     }
 
+    // --- Métodos de CRUD (Create, Read, Update, Delete) ---
+
+    public boolean addProducto(String nombre, double precio, int cantidad) {
+        Producto nuevoProducto = new Producto(nombre, precio, cantidad);
+        return productoDAO.save(nuevoProducto);
+    }
+
+    public Producto getProductoPorNombre(String nombre) {
+        return productoDAO.findByName(nombre);
+    }
+    
+    public List<Producto> getTodosLosProductos() {
+        return productoDAO.findAll();
+    }
+    
+    public boolean actualizarStock(String nombre, int nuevoStock) {
+        return productoDAO.updateStock(nombre, nuevoStock);
+    }
+
+    // NUEVO MÉTODO: Actualiza producto completo (nombre y precio)
     /**
-     * Agrega un nuevo producto al inventario.
-     *
-     * @param nombre Nombre del producto.
-     * @param precio Precio del producto.
-     * @param cantidad Cantidad inicial en stock.
+     * Actualiza el nombre y precio de un producto.
+     * @param producto Producto con ID y datos actualizados.
+     * @return true si se actualizó con éxito.
      */
-    public void addProducto(String nombre, double precio, int cantidad) {
-        
-        if (preciosSize >= precios.length) {
-            expandPrecios();
+    public boolean updateProducto(Producto producto) {
+        // Delegamos la acción de actualizar al DAO
+        return productoDAO.update(producto);
+    }
+    
+    // NUEVO MÉTODO: Eliminar producto
+    /**
+     * Elimina un producto del inventario.
+     * @param nombre Nombre del producto a eliminar.
+     * @return true si se eliminó con éxito.
+     */
+    public boolean deleteProducto(String nombre) {
+        // Delegamos la acción de eliminar al DAO
+        return productoDAO.deleteByName(nombre);
+    }
+    
+    // --- Lógica adicional de negocio (para la UI) ---
+
+    public double getPrecioMinimo() {
+        List<Producto> productos = getTodosLosProductos();
+        if (productos.isEmpty()) {
+            return 0.0;
         }
 
-        // Agrega el nombre del producto al ArrayList.
-        nombres.add(nombre);
-        // Agrega el precio al array en la siguiente posición disponible.
-        precios[preciosSize++] = precio;
-        // Agrega el nombre y la cantidad al HashMap.
-        stock.put(nombre, cantidad);
+        double min = Double.MAX_VALUE;
+        for (Producto p : productos) {
+            if (p.getPrecio() < min) {
+                min = p.getPrecio();
+            }
+        }
+        return min;
     }
 
-  
-    private void expandPrecios() {
-        // Crea un nuevo array con el doble de capacidad.
-        double[] newPrecios = new double[precios.length * 2];
-        // Copia todos los elementos del array viejo al nuevo.
-        System.arraycopy(precios, 0, newPrecios, 0, precios.length);
-        // Asigna el nuevo array a la variable de precios.
-        precios = newPrecios;
-    }
+    public double getPrecioMaximo() {
+        List<Producto> productos = getTodosLosProductos();
+        if (productos.isEmpty()) {
+            return 0.0;
+        }
 
- 
+        double max = Double.MIN_VALUE;
+        for (Producto p : productos) {
+            if (p.getPrecio() > max) {
+                max = p.getPrecio();
+            }
+        }
+        return max;
+    }
     
-    public int indexOfNombre(String nombre) {
-        return nombres.indexOf(nombre);
+    public boolean existeProducto(String nombre) {
+        return getProductoPorNombre(nombre) != null;
     }
-
-    // --- Métodos de acceso (getters) para usar los datos en otras clases ---
-
-    public ArrayList<String> getNombres() {
-        return nombres;
-    }
-
-    public double[] getPrecios() {
-        return precios;
-    }
-
-    public int getPreciosSize() {
-        return preciosSize;
-    }
-
-    public HashMap<String, Integer> getStock() {
-        return stock;
-    }
-
-   
 }

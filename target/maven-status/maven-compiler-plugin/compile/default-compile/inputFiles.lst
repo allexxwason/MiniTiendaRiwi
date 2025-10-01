@@ -1,2 +1,5 @@
-/home/Coder/Documentos/alex/ProyectosJava/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/domain/Inventario.java
-/home/Coder/Documentos/alex/ProyectosJava/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/ui/MiniTiendaRiwi.java
+/home/Coder/Documentos/alex/Proyect/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/db/DatabaseConnection.java
+/home/Coder/Documentos/alex/Proyect/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/db/ProductoDAO.java
+/home/Coder/Documentos/alex/Proyect/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/domain/Inventario.java
+/home/Coder/Documentos/alex/Proyect/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/domain/Producto.java
+/home/Coder/Documentos/alex/Proyect/MiniTiendaRiwi/src/main/java/com/codeup/minitiendariwi/ui/MiniTiendaRiwi.java
