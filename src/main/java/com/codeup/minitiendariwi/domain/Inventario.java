@@ -16,9 +16,9 @@ public class Inventario {
     }
 
     // --- Métodos de CRUD (Create, Read, Update, Delete) ---
-
-    public boolean addProducto(String nombre, double precio, int cantidad) {
-        Producto nuevoProducto = new Producto(nombre, precio, cantidad);
+    
+    // ACTUALIZADO: Acepta el objeto Producto ya creado (subclase)
+    public boolean addProducto(Producto nuevoProducto) {
         return productoDAO.save(nuevoProducto);
     }
 
@@ -34,25 +34,21 @@ public class Inventario {
         return productoDAO.updateStock(nombre, nuevoStock);
     }
 
-    // NUEVO MÉTODO: Actualiza producto completo (nombre y precio)
     /**
      * Actualiza el nombre y precio de un producto.
      * @param producto Producto con ID y datos actualizados.
      * @return true si se actualizó con éxito.
      */
     public boolean updateProducto(Producto producto) {
-        // Delegamos la acción de actualizar al DAO
         return productoDAO.update(producto);
     }
     
-    // NUEVO MÉTODO: Eliminar producto
     /**
      * Elimina un producto del inventario.
      * @param nombre Nombre del producto a eliminar.
      * @return true si se eliminó con éxito.
      */
     public boolean deleteProducto(String nombre) {
-        // Delegamos la acción de eliminar al DAO
         return productoDAO.deleteByName(nombre);
     }
     
