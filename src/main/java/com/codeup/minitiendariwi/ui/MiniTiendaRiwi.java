@@ -253,24 +253,21 @@ public class MiniTiendaRiwi {
         String nombre = getStringInput("Ingrese el nombre del producto para actualizar stock:");
         if (nombre == null) return;
 
-        if (!inventario.existeProducto(nombre)) {
-            // Se usa this.parentFrame como ancla
+        Producto producto = inventario.getProductoPorNombre(nombre);
+        if (producto == null) {
             JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         int nuevoStock = getIntInput("Ingrese el NUEVO stock total (ej: 50):");
         if (nuevoStock == -1 || nuevoStock < 0) {
-            // Se usa this.parentFrame como ancla
             JOptionPane.showMessageDialog(this.parentFrame, "Stock no puede ser negativo.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         if (inventario.actualizarStock(nombre, nuevoStock)) {
-            // Se usa this.parentFrame como ancla
             JOptionPane.showMessageDialog(this.parentFrame, "Stock de " + nombre + " actualizado a: " + nuevoStock);
         } else {
-            // Se usa this.parentFrame como ancla
             JOptionPane.showMessageDialog(this.parentFrame, "Error al actualizar stock en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -328,31 +325,28 @@ public class MiniTiendaRiwi {
         String nombre = getStringInput("Ingrese el nombre del producto a ELIMINAR:");
         if (nombre == null) return;
 
-        if (!inventario.existeProducto(nombre)) {
-            // Se usa this.parentFrame como ancla
+        Producto producto = inventario.getProductoPorNombre(nombre);
+        if (producto == null) {
             JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Se usa this.parentFrame como ancla
-        int confirmacion = JOptionPane.showConfirmDialog(this.parentFrame, 
-                "¿Está seguro de que desea ELIMINAR " + nombre + " permanentemente?", 
-                "Confirmar Eliminación", 
+        int confirmacion = JOptionPane.showConfirmDialog(this.parentFrame,
+                "¿Está seguro de eliminar '" + producto.getNombre() + "' permanentemente?",
+                "Confirmar eliminación",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirmacion == JOptionPane.YES_OPTION) {
-            if (inventario.deleteProducto(nombre)) {
-                // Se usa this.parentFrame como ancla
-                JOptionPane.showMessageDialog(this.parentFrame, "Producto '" + nombre + "' eliminado correctamente.");
+            if (inventario.deleteProducto(producto.getId())) {
+                JOptionPane.showMessageDialog(this.parentFrame, "Producto eliminado correctamente.");
             } else {
-                // Se usa this.parentFrame como ancla
-                JOptionPane.showMessageDialog(this.parentFrame, "Error al intentar eliminar el producto de la BD.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this.parentFrame, "Error al eliminar el producto en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            // Se usa this.parentFrame como ancla
             JOptionPane.showMessageDialog(this.parentFrame, "Eliminación cancelada.", "Cancelado", JOptionPane.INFORMATION_MESSAGE);
         }
     }
+
 
     private void mostrarEstadisticas() {
         List<Producto> productos = inventario.getTodosLosProductos();
