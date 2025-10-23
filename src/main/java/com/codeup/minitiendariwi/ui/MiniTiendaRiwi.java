@@ -2,419 +2,276 @@ package com.codeup.minitiendariwi.ui;
 
 import com.codeup.minitiendariwi.domain.Alimento;
 import com.codeup.minitiendariwi.domain.Electrodomestico;
-import com.codeup.minitiendariwi.domain.Inventario;
 import com.codeup.minitiendariwi.domain.Producto;
-import javax.swing.JOptionPane;
-import javax.swing.JFrame; // ¡IMPORTANTE! Se añade para anclar las ventanas
+import com.codeup.minitiendariwi.service.impl.InventarioServiceImpl;
+import com.codeup.minitiendariwi.exceptions.*;
+import javax.swing.*;
 import java.util.List;
 
 /**
- * Clase principal de la aplicación.
- * Gestiona la interacción con el usuario a través de JOptionPane.
+ * =============================
+ *   CAPA DE PRESENTACIÓN (UI)
+ * =============================
+ * 
+ * Interfaz principal de la aplicación Mini Tienda Riwi.
+ * Se comunica ÚNICAMENTE con la capa de servicio (Service),
+ * sin acceder directamente a la base de datos.
+ * 
+ * Aquí se gestionan:
+ *  - Interacciones con el usuario (JOptionPane)
+ *  - Llamadas a la capa de negocio (Service)
+ *  - Manejo de excepciones personalizadas
+ *  - Control del flujo general del programa
  */
 public class MiniTiendaRiwi {
 
-    private Inventario inventario;
+    private InventarioServiceImpl servicio;
     private double totalCompras;
-    private JFrame parentFrame; // NUEVO: La ventana ancla para los JOptionPanes
+    private JFrame parentFrame;
 
     public MiniTiendaRiwi() {
-        this.inventario = new Inventario();
+        this.servicio = new InventarioServiceImpl();
         this.totalCompras = 0.0;
-        
-        // Inicializar la ventana ancla (invisible)
         this.parentFrame = new JFrame();
         this.parentFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.parentFrame.setVisible(false); 
+        this.parentFrame.setVisible(false);
     }
 
+    /**
+     * Menú principal de la aplicación.
+     * Controla las opciones del usuario y gestiona el flujo del programa.
+     */
     public void mostrarMenu() {
         String opcion = "";
         do {
-            // Se usa this.parentFrame como ancla
             opcion = JOptionPane.showInputDialog(this.parentFrame,
                     "--- Menú de Inventario ---\n" +
                             "1. Agregar producto\n" +
                             "2. Listar inventario\n" +
                             "3. Comprar producto\n" +
                             "4. Mostrar estadísticas\n" +
-                            "5. Buscar producto por nombre\n" +
-                            "6. Actualizar stock \n" +
-                            "7. Actualizar nombre\n" +
-                            "8. Eliminar producto\n" +
-                            "9. Salir",
+                            "5. Buscar producto\n" +
+                            "6. Actualizar producto\n" +
+                            "7. Eliminar producto\n" +
+                            "8. Salir",
                     "Mini Tienda Riwi",
                     JOptionPane.PLAIN_MESSAGE);
 
-            if (opcion == null) {
-                opcion = "9";
+            if (opcion == null) opcion = "8";
+
+            try {
+                switch (opcion) {
+                    case "1" -> agregarProducto();
+                    case "2" -> listarInventario();
+                    case "3" -> comprarProducto();
+                    case "4" -> mostrarEstadisticas();
+                    case "5" -> buscarProducto();
+                    case "6" -> actualizarProducto();
+                    case "7" -> eliminarProducto();
+                    case "8" -> mostrarTicketFinal();
+                    default -> JOptionPane.showMessageDialog(this.parentFrame, "Opción inválida.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (DatoInvalidoException | DuplicadoException e) {
+                JOptionPane.showMessageDialog(this.parentFrame, e.getMessage(), "Error de validación", JOptionPane.ERROR_MESSAGE);
+            } catch (PersistenciaException e) {
+                JOptionPane.showMessageDialog(this.parentFrame, e.getMessage(), "Error en base de datos", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this.parentFrame, "Error inesperado: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
 
-            switch (opcion) {
-                case "1":
-                    agregarProducto();
-                    break;
-                case "2":
-                    listarInventario();
-                    break;
-                case "3":
-                    comprarProducto();
-                    break;
-                case "4":
-                    mostrarEstadisticas();
-                    break;
-                case "5":
-                    buscarProducto();
-                    break;
-                case "6":
-                    actualizarStock(); 
-                    break;
-                case "7":
-                    actualizarProducto(); 
-                    break;
-                case "8":
-                    eliminarProducto(); 
-                    break;
-                case "9":
-                    mostrarTicketFinal();
-                    // Se usa this.parentFrame como ancla
-                    JOptionPane.showMessageDialog(this.parentFrame, "Saliendo del sistema.", "Adiós", JOptionPane.INFORMATION_MESSAGE);
-                    break;
-                default:
-                    // Se usa this.parentFrame como ancla
-                    JOptionPane.showMessageDialog(this.parentFrame, "Opción inválida. Intente de nuevo.", "Error", JOptionPane.ERROR_MESSAGE);
-                    break;
-            }
-        } while (!opcion.equals("9"));
-    }
-    
-    // --- Métodos de Entrada de Usuario (Corregidos) ---
-
-    private String getStringInput(String mensaje) {
-        // Se usa this.parentFrame como ancla
-        String input = JOptionPane.showInputDialog(this.parentFrame, mensaje);
-        return (input == null || input.trim().isEmpty()) ? null : input.trim();
+        } while (!opcion.equals("8"));
     }
 
-    private int getIntInput(String mensaje) {
-        // Se usa this.parentFrame como ancla
-        String input = JOptionPane.showInputDialog(this.parentFrame, mensaje);
-        if (input == null || input.trim().isEmpty()) {
-            return -1;
-        }
-        try {
-            return Integer.parseInt(input);
-        } catch (NumberFormatException e) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Entrada inválida. Ingrese un número entero.", "Error", JOptionPane.ERROR_MESSAGE);
-            return -1;
-        }
-    }
-
-    private double getDoubleInput(String mensaje) {
-        // Se usa this.parentFrame como ancla
-        String input = JOptionPane.showInputDialog(this.parentFrame, mensaje);
-        if (input == null || input.trim().isEmpty()) {
-            return -1.0;
-        }
-        try {
-            return Double.parseDouble(input);
-        } catch (NumberFormatException e) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Entrada inválida. Ingrese un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
-            return -1.0;
-        }
-    }
-    
-    // --- Lógica de la Aplicación (Funcionalidades) ---
-
-    private void agregarProducto() {
-        // 1. Pedir el tipo
-        // Se usa this.parentFrame como ancla
-        String tipoStr = JOptionPane.showInputDialog(this.parentFrame, 
-                "Seleccione el tipo de producto:\n1. Alimento\n2. Electrodoméstico",
+    /**
+     * Opción 1: Agregar un nuevo producto al inventario.
+     */
+    private void agregarProducto() throws DatoInvalidoException, DuplicadoException, PersistenciaException {
+        String tipoStr = JOptionPane.showInputDialog(this.parentFrame,
+                "Seleccione tipo de producto:\n1. Alimento\n2. Electrodoméstico",
                 "Tipo de Producto", JOptionPane.QUESTION_MESSAGE);
-        
         if (tipoStr == null) return;
-        
-        String tipo;
-        if (tipoStr.equals("1")) {
-            tipo = "Alimento";
-        } else if (tipoStr.equals("2")) {
-            tipo = "Electrodomestico";
-        } else {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Opción de tipo inválida.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // 2. Pedir datos y validar
-        String nombre = getStringInput("Ingrese el nombre del producto:");
-        if (nombre == null) return;
 
-        if (inventario.existeProducto(nombre)) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "El producto '" + nombre + "' ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
+        String tipo = tipoStr.equals("1") ? "Alimento" : tipoStr.equals("2") ? "Electrodomestico" : null;
+        if (tipo == null) {
+            JOptionPane.showMessageDialog(this.parentFrame, "Tipo inválido.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
+
+        String nombre = JOptionPane.showInputDialog(this.parentFrame, "Nombre:");
+        if (nombre == null || nombre.trim().isEmpty()) throw new DatoInvalidoException("El nombre no puede estar vacío.");
 
         double precio = getDoubleInput("Ingrese el precio del producto:");
-        if (precio <= 0) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "El precio debe ser un valor positivo.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        if (precio <= 0) throw new DatoInvalidoException("El precio debe ser mayor a 0.");
 
-        int cantidad = getIntInput("Ingrese el stock inicial:");
-        if (cantidad < 0) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "El stock no puede ser negativo.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // 3. Crear la subclase correcta (Polimorfismo)
-        Producto nuevoProducto;
-        if (tipo.equals("Alimento")) {
-            nuevoProducto = new Alimento(nombre, precio, cantidad); 
-        } else { 
-            nuevoProducto = new Electrodomestico(nombre, precio, cantidad); 
-        }
+        int stock = getIntInput("Ingrese el stock inicial:");
+        if (stock < 0) throw new DatoInvalidoException("El stock no puede ser negativo.");
 
-        // 4. Guardar
-        if (inventario.addProducto(nuevoProducto)) { 
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Producto agregado correctamente.");
-        } else {
-             // Se usa this.parentFrame como ancla
-             JOptionPane.showMessageDialog(this.parentFrame, "Error al agregar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        Producto nuevoProducto = tipo.equals("Alimento")
+                ? new Alimento(nombre, precio, stock)
+                : new Electrodomestico(nombre, precio, stock);
+
+        servicio.agregarProducto(nuevoProducto);
+        JOptionPane.showMessageDialog(this.parentFrame, "✅ Producto agregado correctamente.");
     }
-    
-    private void listarInventario() {
-        StringBuilder sb = new StringBuilder("--- Inventario Actual ---\n");
-        List<Producto> productos = inventario.getTodosLosProductos();
 
+    /**
+     * Opción 2: Muestra el listado completo de productos registrados.
+     */
+    private void listarInventario() throws PersistenciaException {
+        List<Producto> productos = servicio.listar();
         if (productos.isEmpty()) {
-            sb.append("El inventario está vacío.");
-        } else {
-            for (Producto producto : productos) {
-                // Polimorfismo: llama a getDescripcion() de la subclase correcta
-                sb.append("ID: ").append(producto.getId()).append("\n") 
-                  .append("  Producto: ").append(producto.getNombre()).append("\n")
-                  .append("  Precio: $").append(String.format("%.2f", producto.getPrecio())).append("\n")
-                  .append("  Stock: ").append(producto.getStock()).append("\n")
-                  .append("  Descripción: ").append(producto.getDescripcion()).append("\n") 
-                  .append("------------------------\n");
-            }
+            JOptionPane.showMessageDialog(this.parentFrame, "Inventario vacío.");
+            return;
         }
-        // Se usa this.parentFrame como ancla
-        JOptionPane.showMessageDialog(this.parentFrame, sb.toString(), "Listado de Inventario", JOptionPane.PLAIN_MESSAGE);
-    }
-    
-    private void comprarProducto() {
-        String nombre = getStringInput("Ingrese el nombre del producto a comprar:");
-        if (nombre == null) return;
 
-        Producto producto = inventario.getProductoPorNombre(nombre);
-        
-        if (producto == null) {
-            // Se usa this.parentFrame como ancla
+        StringBuilder sb = new StringBuilder("--- Inventario ---\n");
+        for (Producto p : productos) {
+            sb.append(String.format("ID: %d\nNombre: %s\nPrecio: $%.2f\nStock: %d\n------------------\n",
+                    p.getId(), p.getNombre(), p.getPrecio(), p.getStock()));
+        }
+        JOptionPane.showMessageDialog(this.parentFrame, sb.toString());
+    }
+
+    /**
+     * Opción 3: Permite comprar productos restando stock.
+     */
+    private void comprarProducto() throws PersistenciaException, DatoInvalidoException {
+        String nombre = JOptionPane.showInputDialog(this.parentFrame, "Nombre del producto a comprar:");
+        if (nombre == null || nombre.isBlank()) return;
+
+        Producto p = servicio.buscarPorNombre(nombre);
+        if (p == null) {
             JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.");
             return;
         }
 
-        int cantidad = getIntInput("Ingrese la cantidad a comprar:");
-        if (cantidad == -1 || cantidad <= 0) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "La cantidad debe ser mayor que cero.", "Error", JOptionPane.ERROR_MESSAGE);
+        int cantidad = getIntInput("Ingrese cantidad a comprar:");
+        if (cantidad <= 0) throw new DatoInvalidoException("Cantidad inválida.");
+
+        if (p.getStock() < cantidad) {
+            JOptionPane.showMessageDialog(this.parentFrame, "Stock insuficiente. Disponible: " + p.getStock());
             return;
         }
 
-        int stockActual = producto.getStock();
-        if (stockActual < cantidad) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Stock insuficiente. Cantidad disponible: " + stockActual);
-        } else {
-            int nuevoStock = stockActual - cantidad;
-            
-            if (inventario.actualizarStock(nombre, nuevoStock)) {
-                double precioProducto = producto.getPrecio();
-                totalCompras += precioProducto * cantidad;
-                // Se usa this.parentFrame como ancla
-                JOptionPane.showMessageDialog(this.parentFrame, "Compra realizada con éxito. Nuevo stock de " + nombre + ": " + nuevoStock);
-            } else {
-                 // Se usa this.parentFrame como ancla
-                 JOptionPane.showMessageDialog(this.parentFrame, "Error al actualizar el stock en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
-    private void actualizarStock() {
-        String nombre = getStringInput("Ingrese el nombre del producto para actualizar stock:");
-        if (nombre == null) return;
+        p.setStock(p.getStock() - cantidad);
+        servicio.actualizar(p);
+        totalCompras += p.getPrecio() * cantidad;
 
-        if (!inventario.existeProducto(nombre)) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        int nuevoStock = getIntInput("Ingrese el NUEVO stock total (ej: 50):");
-        if (nuevoStock == -1 || nuevoStock < 0) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Stock no puede ser negativo.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (inventario.actualizarStock(nombre, nuevoStock)) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Stock de " + nombre + " actualizado a: " + nuevoStock);
-        } else {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Error al actualizar stock en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        JOptionPane.showMessageDialog(this.parentFrame, "Compra realizada con éxito.");
     }
 
-    // CORRECCIÓN: Instancia la subclase correcta
-    private void actualizarProducto() {
-        String nombreActual = getStringInput("Ingrese el nombre del producto a actualizar:");
-        if (nombreActual == null) return;
-
-        Producto producto = inventario.getProductoPorNombre(nombreActual);
-        if (producto == null) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String nuevoNombre = getStringInput("Ingrese el nuevo nombre (" + producto.getNombre() + "):");
-        double nuevoPrecio = getDoubleInput("Ingrese el nuevo precio (" + producto.getPrecio() + "):");
-
-        if (nuevoNombre == null || nuevoPrecio == -1.0) {
-             // Se usa this.parentFrame como ancla
-             JOptionPane.showMessageDialog(this.parentFrame, "Operación cancelada o datos inválidos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        if (nuevoPrecio <= 0) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "El precio debe ser positivo.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // Determinar la subclase correcta (Polimorfismo para mantener el tipo)
-        Producto productoActualizado;
-        if (producto instanceof Alimento) {
-            productoActualizado = new Alimento(producto.getId(), nuevoNombre, nuevoPrecio, producto.getStock());
-        } else if (producto instanceof Electrodomestico) {
-            productoActualizado = new Electrodomestico(producto.getId(), nuevoNombre, nuevoPrecio, producto.getStock());
-        } else {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Error interno: Tipo de producto desconocido para actualizar.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-
-        if (inventario.updateProducto(productoActualizado)) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Producto actualizado con éxito: " + nuevoNombre + " ($" + String.format("%.2f", nuevoPrecio) + ")");
-        } else {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Error al actualizar el producto en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void eliminarProducto() {
-        String nombre = getStringInput("Ingrese el nombre del producto a ELIMINAR:");
-        if (nombre == null) return;
-
-        if (!inventario.existeProducto(nombre)) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Se usa this.parentFrame como ancla
-        int confirmacion = JOptionPane.showConfirmDialog(this.parentFrame, 
-                "¿Está seguro de que desea ELIMINAR " + nombre + " permanentemente?", 
-                "Confirmar Eliminación", 
-                JOptionPane.YES_NO_OPTION);
-
-        if (confirmacion == JOptionPane.YES_OPTION) {
-            if (inventario.deleteProducto(nombre)) {
-                // Se usa this.parentFrame como ancla
-                JOptionPane.showMessageDialog(this.parentFrame, "Producto '" + nombre + "' eliminado correctamente.");
-            } else {
-                // Se usa this.parentFrame como ancla
-                JOptionPane.showMessageDialog(this.parentFrame, "Error al intentar eliminar el producto de la BD.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "Eliminación cancelada.", "Cancelado", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void mostrarEstadisticas() {
-        List<Producto> productos = inventario.getTodosLosProductos();
-        
+    /**
+     * Opción 4: Muestra estadísticas básicas (precio más alto y más bajo).
+     */
+    private void mostrarEstadisticas() throws PersistenciaException {
+        List<Producto> productos = servicio.listar();
         if (productos.isEmpty()) {
-            // Se usa this.parentFrame como ancla
-            JOptionPane.showMessageDialog(this.parentFrame, "El inventario está vacío. No hay estadísticas para mostrar.");
+            JOptionPane.showMessageDialog(this.parentFrame, "No hay productos registrados.");
             return;
         }
 
-        double precioMax = inventario.getPrecioMaximo();
-        double precioMin = inventario.getPrecioMinimo();
+        double max = productos.stream().mapToDouble(Producto::getPrecio).max().orElse(0);
+        double min = productos.stream().mapToDouble(Producto::getPrecio).min().orElse(0);
 
-        String mensaje = String.format("--- Estadísticas de Precios ---\n" +
-                                     "Precio más barato: $%.2f\n" +
-                                     "Precio más caro: $%.2f", precioMin, precioMax);
-
-        // Se usa this.parentFrame como ancla
-        JOptionPane.showMessageDialog(this.parentFrame, mensaje, "Estadísticas", JOptionPane.INFORMATION_MESSAGE);
-    }
-    
-    private void buscarProducto() {
-        String busqueda = getStringInput("Ingrese el nombre o parte del nombre del producto a buscar:");
-        if (busqueda == null) return;
-
-        StringBuilder resultados = new StringBuilder("--- Resultados de Búsqueda ---\n");
-        boolean encontrado = false;
-
-        List<Producto> productos = inventario.getTodosLosProductos();
-        
-        for (Producto producto : productos) {
-            String nombreProducto = producto.getNombre();
-            if (nombreProducto.toLowerCase().contains(busqueda.toLowerCase())) {
-                resultados.append("ID: ").append(producto.getId()).append("\n")
-                          .append("  Producto: ").append(nombreProducto).append("\n")
-                          .append("  Precio: $").append(String.format("%.2f", producto.getPrecio())).append("\n")
-                          .append("  Stock: ").append(producto.getStock()).append("\n")
-                          .append("  Descripción: ").append(producto.getDescripcion()).append("\n") // Usa polimorfismo
-                          .append("------------------------\n");
-                encontrado = true;
-            }
-        }
-
-        if (!encontrado) {
-            resultados.append("No se encontraron productos que coincidan con la búsqueda.");
-        }
-
-        // Se usa this.parentFrame como ancla
-        JOptionPane.showMessageDialog(this.parentFrame, resultados.toString(), "Buscar Producto", JOptionPane.PLAIN_MESSAGE);
+        JOptionPane.showMessageDialog(this.parentFrame,
+                String.format("💰 Precio más alto: $%.2f\n🪙 Precio más bajo: $%.2f", max, min));
     }
 
+    /**
+     * Opción 5: Buscar un producto específico por nombre.
+     */
+    private void buscarProducto() throws PersistenciaException {
+        String nombre = JOptionPane.showInputDialog(this.parentFrame, "Nombre del producto a buscar:");
+        if (nombre == null || nombre.isBlank()) return;
+
+        Producto p = servicio.buscarPorNombre(nombre);
+        if (p == null) {
+            JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.");
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this.parentFrame,
+                String.format("ID: %d\nNombre: %s\nPrecio: $%.2f\nStock: %d",
+                        p.getId(), p.getNombre(), p.getPrecio(), p.getStock()));
+    }
+
+    /**
+     * Opción 6: Actualiza precio y stock de un producto.
+     */
+    private void actualizarProducto() throws DatoInvalidoException, PersistenciaException {
+        String nombre = JOptionPane.showInputDialog(this.parentFrame, "Nombre del producto a actualizar:");
+        if (nombre == null || nombre.isBlank()) return;
+
+        Producto p = servicio.buscarPorNombre(nombre);
+        if (p == null) throw new DatoInvalidoException("Producto no encontrado.");
+
+        double nuevoPrecio = getDoubleInput("Nuevo precio:");
+        int nuevoStock = getIntInput("Nuevo stock:");
+        if (nuevoPrecio <= 0 || nuevoStock < 0) throw new DatoInvalidoException("Datos inválidos.");
+
+        p.setPrecio(nuevoPrecio);
+        p.setStock(nuevoStock);
+        servicio.actualizar(p);
+
+        JOptionPane.showMessageDialog(this.parentFrame, "✅ Producto actualizado correctamente.");
+    }
+
+    /**
+     * Opción 7: Elimina un producto del inventario.
+     */
+    private void eliminarProducto() throws PersistenciaException {
+        String nombre = JOptionPane.showInputDialog(this.parentFrame, "Nombre del producto a eliminar:");
+        if (nombre == null || nombre.isBlank()) return;
+
+        Producto p = servicio.buscarPorNombre(nombre);
+        if (p == null) {
+            JOptionPane.showMessageDialog(this.parentFrame, "Producto no encontrado.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this.parentFrame,
+                "¿Eliminar " + p.getNombre() + "?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            servicio.eliminar(p.getId());
+            JOptionPane.showMessageDialog(this.parentFrame, "🗑️ Producto eliminado correctamente.");
+        }
+    }
+
+    /**
+     * Opción 8: Muestra el resumen de la sesión (total gastado).
+     */
     private void mostrarTicketFinal() {
-        String mensaje = String.format("Gracias por tu visita.\n" +
-                                     "Total de compras en esta sesión: $%.2f", totalCompras);
-        // Se usa this.parentFrame como ancla
-        JOptionPane.showMessageDialog(this.parentFrame, mensaje, "Ticket Final", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this.parentFrame,
+                String.format("Gracias por su compra.\nTotal gastado: $%.2f", totalCompras),
+                "Resumen", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    // ==== MÉTODOS AUXILIARES ====
+
+    private int getIntInput(String msg) {
+        try {
+            String input = JOptionPane.showInputDialog(this.parentFrame, msg);
+            return (input == null || input.isBlank()) ? -1 : Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this.parentFrame, "Ingrese un número válido.");
+            return -1;
+        }
+    }
+
+    private double getDoubleInput(String msg) {
+        try {
+            String input = JOptionPane.showInputDialog(this.parentFrame, msg);
+            return (input == null || input.isBlank()) ? -1 : Double.parseDouble(input);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this.parentFrame, "Ingrese un valor válido.");
+            return -1;
+        }
+    }
+
+    // ==== MÉTODO PRINCIPAL ====
     public static void main(String[] args) {
         MiniTiendaRiwi app = new MiniTiendaRiwi();
         app.mostrarMenu();
-        // Cierre limpio de la aplicación.
         System.exit(0);
     }
 }
