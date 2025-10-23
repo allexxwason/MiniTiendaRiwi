@@ -11,7 +11,7 @@ public class DatabaseConnection {
     
     private static final String URL = "jdbc:mysql://localhost:3306/mini_tienda_riwi";
     private static final String USER = "root";
-    private static final String PASSWORD = "Qwe.123*"; 
+    private static final String PASSWORD = ""; 
     
     // El driver se carga automáticamente en versiones modernas, pero se puede incluir
     // static {

@@ -1,6 +1,7 @@
 package com.codeup.minitiendariwi.domain;
 
-import com.codeup.minitiendariwi.db.ProductoDAO;
+import com.codeup.minitiendariwi.dao.ProductoDAO;
+import com.codeup.minitiendariwi.exceptions.PersistenciaException;
 import java.util.List;
 
 /**
@@ -9,10 +10,70 @@ import java.util.List;
  */
 public class Inventario {
 
-    private ProductoDAO productoDAO;
+    private final ProductoDAO productoDAO;
 
     public Inventario() {
-        this.productoDAO = new ProductoDAO();
+        this.productoDAO = new ProductoDAO() {
+            @Override
+            public void crear(Producto producto) throws PersistenciaException {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public Producto buscarPorId(int id) throws PersistenciaException {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public List<Producto> buscarTodos() throws PersistenciaException {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public void actualizar(Producto producto) throws PersistenciaException {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public void eliminar(int id) throws PersistenciaException {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public Producto buscarPorNombre(String nombre) throws PersistenciaException {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public boolean save(Producto nuevoProducto) {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public Producto findByName(String nombre) {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public List<Producto> findAll() {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public boolean updateStock(String nombre, int nuevoStock) {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public boolean update(Producto producto) {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+
+            @Override
+            public boolean deleteByName(String nombre) {
+                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            }
+        };
     }
 
     // --- Métodos de CRUD (Create, Read, Update, Delete) ---
